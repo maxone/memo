@@ -1,0 +1,136 @@
+<html>
+	<head>
+		<title><%= title%></title>
+		 <link rel='stylesheet' href='/stylesheets/style.css' />
+		 <script src='/javascripts/jquery_1.8.2_min.js'></script>
+   	 	 <script src="/javascripts/json2.js"></script>
+	</head>
+	<body>
+	</body>
+</html>
+<div class="container">
+	<section class="todo">
+		<ul class="todo-controls">
+			<li><a href="javascript:memo.add();" class="icon-add">Add</a></li>
+			<li><a href="javascript:memo._delete();" class="icon-delete">Delete</a></li>
+			<li class="right"><a href="javascript:void(0);" class="icon-settings">Settings</a></li>
+		</ul>
+	
+		<ul class="todo-list" id="listBox">
+			<li id="add_memo" style="display:none">
+				<input id="inputBox" type="text" style="width:100%"/>
+			</li>
+		</ul>
+		<ul class="todo-pagination">
+			<li class="previous"><span><i class="icon-previous"></i> Previous</span></li>
+			<li class="next"><a href="javascript:void(0);">Next <i class="icon-next"></i></a></li>
+		</ul>
+	</section>
+</div>
+<script>
+var memo = function(){
+	this.save=function(content){
+		$.post(
+		  		"/save", 
+				{
+		  			'content':content
+				}, 
+				function(result) {
+					if(result.status == 'ok'){
+						var addMemoBox = $('#add_memo');
+						var oneMemo = result.memo;
+						addMemoBox.after(buildLine(oneMemo));
+						$('#inputBox').val('');
+						$('#add_memo').hide();
+					}else{
+						//TODO error界面提示
+						
+					}
+				}
+				
+		);
+		
+	},
+	
+	this.add= function(){
+		document.getElementById('add_memo').style.display='block';
+	},
+	
+	this._delete =function(){
+		var val =[];
+		$("input[type='checkbox']:checked").each(function(){ 
+			val.push($(this).val());
+		});
+		//val.join();
+		//alert(JSON.stringify(val));
+		
+
+		
+		$.post(
+			'/delete',
+			{
+				//ids:val.join()
+				ids:JSON.stringify(val)
+			},
+			function(result){
+				if(result.status=='ok'){
+					for(var i=0;i<val.length;i++){
+						$('#li_'+val[i]).remove();
+					}
+				}
+			}
+		);
+	},
+	this.list=function(){
+		$.get(
+				"/list",
+				{
+					
+				},
+				function(result){
+					var listBox = $('#listBox');
+					for(var i=0;i<result.length;i++){
+						show(listBox,result[i]);
+					}
+				}
+			
+			);		
+	},
+	
+	this.buildLine = function(oneMemo){
+		return '<li id="li_'+oneMemo._id+'"><input type="checkbox" value="'+oneMemo._id+'"  id="chk_'+oneMemo._id+'"/><label class="toggle" for="chk_'+oneMemo._id+'"></label>'+oneMemo.content+'</li>';
+
+	}
+	this.show= function(box,oneMemo){
+			box.append(buildLine(oneMemo));
+	}
+	
+	
+	return this;
+	
+}();
+
+
+$(function(){
+	memo.list();
+
+	$('#inputBox').bind('keyup',function(event){  
+		if(event.keyCode==13){
+			if($.trim($('#inputBox').val()) != ''){
+				memo.save($('#inputBox').val());
+			}
+		}  
+	}); 
+});
+
+
+
+
+
+
+
+
+
+</script>
+</body>
+</html>
